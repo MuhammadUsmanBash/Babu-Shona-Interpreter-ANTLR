@@ -17,15 +17,16 @@ class BabuIDE:
 
         # Define keywords and colors for light and dark modes
         self.keywords = {
-            "dekho babu": {"dark": "#FFD700", "light": "#FFEB3B"},
-            "mela babu": {"dark": "#FF6347", "light": "#F57C00"},
-            "bolo shona": {"dark": "#00BFFF", "light": "#4FC3F7"},
-            "agar babu": {"dark": "#90EE90", "light": "#A5D6A7"},
-            "lekin babu": {"dark": "#90EE90", "light": "#A5D6A7"},
-            "magar shona": {"dark": "#FF9800", "light": "#FFB74D"},
-            "chalo babu": {"dark": "#FF1493", "light": "#F06292"},
-            "Shona": {"dark": "#FF6347", "light": "#D32F2F"},
+            "dekho babu": {"dark": "#FFF176", "light": "#FFC107"},  # Increased tint in dark mode, tone in light mode
+            "mela babu": {"dark": "#FFB74D", "light": "#FF4500"},  # Increased tint in dark mode, tone in light mode
+            "bolo shona": {"dark": "#81D4FA", "light": "#1E90FF"},  # Increased tint in dark mode, tone in light mode
+            "agar babu": {"dark": "#C8E6C9", "light": "#32CD32"},  # Increased tint in dark mode, tone in light mode
+            "lekin babu": {"dark": "#C8E6C9", "light": "#32CD32"},  # Increased tint in dark mode, tone in light mode
+            "magar shona": {"dark": "#FFCC80", "light": "#FFA500"},  # Increased tint in dark mode, tone in light mode
+            "chalo babu": {"dark": "#F8BBD0", "light": "#FF69B4"},  # Increased tint in dark mode, tone in light mode
+            "Shona": {"dark": "#E57373", "light": "#FF4500"},  # Increased tint in dark mode, tone in light mode
         }
+
 
         # Track current mode
         self.current_mode = "dark"
