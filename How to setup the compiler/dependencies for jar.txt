@@ -1,0 +1,5 @@
+java -jar "C:\Program Files\antlr\antlr-4.13.2-complete.jar" -Dlanguage=Python3 BabuShona.g4 -o generated
+java -jar "C:\Program Files\antlr\antlr-4.13.2-complete.jar" -Dlanguage=Python3 -visitor BabuShona.g4 -o generated
+
+
+Only these dependencies are here for now.

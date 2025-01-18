@@ -1,0 +1,26 @@
+Babu
+mela babu x = 0
+agar babu (x == 0)
+{
+    dekho babu "x is zero."
+}
+lekin babu (x > 0)
+{
+    dekho babu "x is positive."
+}
+magar shona
+{
+    dekho babu "x is negative."
+}
+
+chalo babu i = 0 se lekar 5 uchal ke 1
+{
+    dekho babu i
+}
+
+chalo babu j = 10 se lekar 20 uchal ke 1
+{
+    dekho babu j
+}
+
+Shona

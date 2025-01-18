@@ -1,0 +1,31 @@
+If generated folder is present in file then:
+**initial Requirements:
+__Python 3.x.x__ with path added into system veriables
+
+Step 1)
+run this command on cmd:
+pip install antlr4-python3-runtime
+
+Step 2)
+run main.py file to run the script.txt file (which is our sabu shona script file)
+
+If the generated folder is not present in the compiler file but grammar.txt is present
+**initial Requirements:
+__Python 3.x.x__ with path added into system veriables
+__JDK 23.x.x__ with path (to JDK bin folder) added into system veriables
+
+
+Step 1)
+run this command on cmd:
+pip install antlr4-python3-runtime
+
+Step 2)
+Place the antlr file (antlr-4.13.2-complete.jar) in C drive (The recommended path is C:\Program Files\antlr)
+
+Step 3)
+open cmd and go to the folder where your grammar.g4 file is present.
+run the following commands present in (dependencies for jar.txt)
+the folder named (generated) will be created in the same compiler folder
+
+Step 4)
+run main.py file to run the script.txt file (which is our sabu shona script file)
