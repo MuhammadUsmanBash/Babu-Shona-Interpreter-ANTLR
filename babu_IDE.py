@@ -4,29 +4,47 @@ from tkinter.scrolledtext import ScrolledText
 import subprocess
 import threading
 import re
+import pygame.mixer
+import os
 
 class BabuIDE:
     def __init__(self, root):
         self.root = root
         self.root.title("Babu IDE")
-        self.root.config(bg="#1c1c1c")  # Set background color for the entire window
-        self.root.geometry("800x600")  # Set default window size
+        self.root.config(bg="#1c1c1c")
+        self.root.geometry("800x600")
+
+        # Initialize sound system
+        pygame.mixer.init()
+        self.is_muted = False
+        self.audio_files = {
+            'dark_mode': 'audio/dark_mode.mp3',
+            'error': 'audio/error.mp3',
+            'exit': 'audio/exit.mp3',
+            'light_mode': 'audio/light_mode.mp3',
+            'new': 'audio/new.mp3',
+            'open': 'audio/open.mp3',
+            'save': 'audio/save.mp3',
+            'save_as': 'audio/save_as.mp3',
+            'input': 'audio/input.mp3',
+            'run': 'audio/run.mp3'  # Added run sound
+        }
 
         # Current file name
         self.current_file = None
+        self.waiting_for_input = False
 
         # Define keywords and colors for light and dark modes
         self.keywords = {
-            "dekho babu": {"dark": "#FFF176", "light": "#FFC107"},  # Increased tint in dark mode, tone in light mode
-            "mela babu": {"dark": "#FFB74D", "light": "#FF4500"},  # Increased tint in dark mode, tone in light mode
-            "bolo shona": {"dark": "#81D4FA", "light": "#1E90FF"},  # Increased tint in dark mode, tone in light mode
-            "agar babu": {"dark": "#C8E6C9", "light": "#32CD32"},  # Increased tint in dark mode, tone in light mode
-            "lekin babu": {"dark": "#C8E6C9", "light": "#32CD32"},  # Increased tint in dark mode, tone in light mode
-            "magar shona": {"dark": "#FFCC80", "light": "#FFA500"},  # Increased tint in dark mode, tone in light mode
-            "chalo babu": {"dark": "#F8BBD0", "light": "#FF69B4"},  # Increased tint in dark mode, tone in light mode
-            "Shona": {"dark": "#E57373", "light": "#FF4500"},  # Increased tint in dark mode, tone in light mode
+            "dekho babu": {"dark": "#FFF176", "light": "#FFC107"},
+            "mela babu": {"dark": "#FFB74D", "light": "#FF4500"},
+            "bolo shona": {"dark": "#81D4FA", "light": "#1E90FF"},
+            "agar babu": {"dark": "#C8E6C9", "light": "#32CD32"},
+            "lekin babu": {"dark": "#C8E6C9", "light": "#32CD32"},
+            "magar shona": {"dark": "#FFCC80", "light": "#FFA500"},
+            "chalo babu": {"dark": "#F8BBD0", "light": "#FF69B4"},
+            "Shona": {"dark": "#E57373", "light": "#FF4500"},
         }
-
 
         # Track current mode
         self.current_mode = "dark"
@@ -48,7 +66,7 @@ class BabuIDE:
         self.output_header = tk.Label(self.terminal_frame, text="Output Box", fg="white", bg="#444444", font=("Arial", 14, "bold"))
         self.output_header.pack(fill=tk.X, pady=(5, 0))
 
-        # Terminal output (Output Box)
+        # Terminal output
         self.terminal_output = ScrolledText(self.terminal_frame, wrap=tk.WORD, height=8, state=tk.NORMAL, bg="#222222", fg="white", font=("Arial", 10))
         self.terminal_output.pack(fill=tk.BOTH, expand=1)
 
@@ -56,7 +74,7 @@ class BabuIDE:
         self.input_header = tk.Label(self.terminal_frame, text="Input Box", fg="white", bg="#444444", font=("Arial", 14, "bold"))
         self.input_header.pack(fill=tk.X, pady=(10, 5))
 
-        # Terminal input (Input Box)
+        # Terminal input
         self.terminal_input = tk.Entry(self.terminal_frame, bg="#444444", fg="white", insertbackground="white", font=("Arial", 12))
         self.terminal_input.pack(fill=tk.X, padx=5, pady=5)
         self.terminal_input.bind("<Return>", self.send_input_to_script)
@@ -65,26 +83,31 @@ class BabuIDE:
         self.menu = tk.Menu(root, bg="#333333", fg="white")
         self.root.config(menu=self.menu)
 
+        # File Menu
         file_menu = tk.Menu(self.menu, tearoff=False, bg="#333333", fg="white")
         self.menu.add_cascade(label="File", menu=file_menu)
-
         file_menu.add_command(label="New", command=self.new_file, accelerator="Ctrl+N")
         file_menu.add_command(label="Open", command=self.open_file, accelerator="Ctrl+O")
         file_menu.add_command(label="Save", command=self.save_file, accelerator="Ctrl+S")
         file_menu.add_command(label="Save As", command=self.save_file_as)
         file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=root.quit)
+        file_menu.add_command(label="Exit", command=self.exit_application)
 
+        # Run Menu
         run_menu = tk.Menu(self.menu, tearoff=False, bg="#333333", fg="white")
         self.menu.add_cascade(label="Run", menu=run_menu)
-
         run_menu.add_command(label="Run", command=self.run_babu_script, accelerator="F5")
 
+        # View Menu
         view_menu = tk.Menu(self.menu, tearoff=False, bg="#333333", fg="white")
         self.menu.add_cascade(label="View", menu=view_menu)
-
         view_menu.add_command(label="Light Mode", command=self.set_light_mode)
         view_menu.add_command(label="Dark Mode", command=self.set_dark_mode)
+
+        # Sound Menu
+        sound_menu = tk.Menu(self.menu, tearoff=False, bg="#333333", fg="white")
+        self.menu.add_cascade(label="Sound", menu=sound_menu)
+        sound_menu.add_command(label="Mute", command=self.toggle_mute)
 
         # Bind shortcuts
         self.root.bind("<Control-n>", lambda event: self.new_file())
@@ -94,9 +117,63 @@ class BabuIDE:
 
         # Process handling
         self.process = None
+        self.waiting_for_input = False  # Flag to track if input is expected
 
-        # Add window control buttons
-        self.add_window_controls()
+    def play_sound(self, sound_name):
+        """Play a sound if unmuted"""
+        if not self.is_muted and sound_name in self.audio_files:
+            try:
+                sound_path = self.audio_files[sound_name]
+                if os.path.exists(sound_path):
+                    pygame.mixer.Sound(sound_path).play()
+            except Exception as e:
+                print(f"Error playing sound: {e}")
+
+
+    def execute_script(self):
+        if self.process and self.process.poll() is None:
+            messagebox.showwarning("Script Running", "A script is already running.")
+            return
+
+        self.append_to_terminal("Running script...\n")
+        self.play_sound('run')  # Play run sound when script starts
+        
+        self.process = subprocess.Popen(
+            ["python", "main.py", self.current_file],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+            text=True
+        )
+\
+        # Read stdout and stderr
+        threading.Thread(target=self.read_output, daemon=True).start()
+        threading.Thread(target=self.read_error, daemon=True).start()
+
+    def read_output(self):
+        for line in iter(self.process.stdout.readline, ""):
+            # Check for input prompts in the output
+            if "input(" in line or "bolo shona" in line:
+                self.waiting_for_input = True
+                self.play_sound('input')
+            self.append_to_terminal(line)
+
+    def read_error(self):
+        for line in iter(self.process.stderr.readline, ""):
+            self.append_to_terminal(line, error=True)
+
+    def send_input_to_script(self, event):
+        user_input = self.terminal_input.get() + "\n"
+        if self.process and self.process.stdin:
+            self.process.stdin.write(user_input)
+            self.process.stdin.flush()
+        self.terminal_input.delete(0, tk.END)
+
+    def toggle_mute(self):
+        self.is_muted = not self.is_muted
+        label = "Unmute" if self.is_muted else "Mute"
+        sound_menu = self.menu.nametowidget(self.menu.entrycget("Sound", "menu"))
+        sound_menu.entryconfigure(0, label=label)
 
     def highlight_syntax(self, event=None):
         text_content = self.text_editor.get("1.0", tk.END)
@@ -109,9 +186,11 @@ class BabuIDE:
                 self.text_editor.tag_add(keyword, start, end)
                 self.text_editor.tag_config(keyword, foreground=colors[self.current_mode])
 
+
     def new_file(self):
         self.current_file = None
         self.text_editor.delete(1.0, tk.END)
+        self.play_sound('new')
 
     def open_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("Babu Files", "*.babu"), ("All Files", "*.*")])
@@ -121,11 +200,13 @@ class BabuIDE:
                 self.text_editor.delete(1.0, tk.END)
                 self.text_editor.insert(1.0, file.read())
             self.highlight_syntax()
+            self.play_sound('open')
 
     def save_file(self):
         if self.current_file:
             with open(self.current_file, "w") as file:
                 file.write(self.text_editor.get(1.0, tk.END).strip())
+            self.play_sound('save')
         else:
             self.save_file_as()
 
@@ -135,15 +216,19 @@ class BabuIDE:
             self.current_file = file_path
             with open(file_path, "w") as file:
                 file.write(self.text_editor.get(1.0, tk.END).strip())
+            self.play_sound('save_as')
 
     def run_babu_script(self):
         if not self.current_file:
             messagebox.showwarning("Save File", "Please save the file before running.")
             return
 
-        self.save_file()  # Ensure the file is saved
-
-        # Run script in a separate thread
+        #Save silently without playing sound
+        with open(self.current_file, "w") as file:
+            file.write(self.text_editor.get(1.0, tk.END).strip())
+        
+        # Play run sound and execute script
+        self.play_sound('run')
         threading.Thread(target=self.execute_script).start()
 
     def execute_script(self):
@@ -172,16 +257,11 @@ class BabuIDE:
         for line in iter(self.process.stderr.readline, ""):
             self.append_to_terminal(line, error=True)
 
-    def send_input_to_script(self, event):
-        user_input = self.terminal_input.get() + "\n"
-        if self.process and self.process.stdin:
-            self.process.stdin.write(user_input)
-            self.process.stdin.flush()
-        self.terminal_input.delete(0, tk.END)
 
     def append_to_terminal(self, text, error=False):
         self.terminal_output.config(state=tk.NORMAL)
         if error:
+            self.play_sound('error')
             self.terminal_output.insert(tk.END, text, "error")
             self.terminal_output.tag_config("error", foreground="red")
         else:
@@ -196,6 +276,7 @@ class BabuIDE:
         self.terminal_input.config(bg="white", fg="black", insertbackground="black", font=("Arial", 12))
         self.output_header.config(bg="#e0e0e0", fg="black")
         self.input_header.config(bg="#e0e0e0", fg="black")
+        self.play_sound('light_mode')
         self.highlight_syntax()  # Reapply highlighting with the new mode
 
     def set_dark_mode(self):
@@ -205,6 +286,7 @@ class BabuIDE:
         self.terminal_input.config(bg="black", fg="white", insertbackground="white", font=("Arial", 12))
         self.output_header.config(bg="#444444", fg="white")
         self.input_header.config(bg="#444444", fg="white")
+        self.play_sound('dark_mode')
         self.highlight_syntax()  # Reapply highlighting with the new mode
 
     def add_window_controls(self):
@@ -225,6 +307,13 @@ class BabuIDE:
             self.root.state('zoomed')
         else:
             self.root.state('normal')
+
+    def exit_application(self):
+        self.play_sound('exit')
+        self.root.after(1500, self.root.quit)  # Wait for sound to play before quitting
+
+    def __del__(self):
+        pygame.mixer.quit()
 
 if __name__ == "__main__":
     root = tk.Tk()
