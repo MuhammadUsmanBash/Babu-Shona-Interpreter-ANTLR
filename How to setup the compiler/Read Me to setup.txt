@@ -5,6 +5,7 @@ __Python 3.x.x__ with path added into system veriables
 Step 1)
 run this command on cmd:
 pip install antlr4-python3-runtime
+pip install pyttsx3 playsound
 
 Step 2)
 run main.py file to run the script.txt file (which is our sabu shona script file)
@@ -18,6 +19,7 @@ __JDK 23.x.x__ with path (to JDK bin folder) added into system veriables
 Step 1)
 run this command on cmd:
 pip install antlr4-python3-runtime
+pip install pyttsx3 playsound
 
 Step 2)
 Place the antlr file (antlr-4.13.2-complete.jar) in C drive (The recommended path is C:\Program Files\antlr)

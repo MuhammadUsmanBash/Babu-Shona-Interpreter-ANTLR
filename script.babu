@@ -1,4 +1,10 @@
 Babu
+dekho babu "Enter any integer"
+mela babu a = 5
+bolo shona a
+dekho babu a
+dekho babu a
+dekho babu a
 mela babu x = 0
 agar babu (x == 0)
 {
@@ -8,6 +14,9 @@ lekin babu (x > 0)
 {
     dekho babu "x is positive."
 }
+mela babu b = 0
+bolo shona b
+dekho babu b
 magar shona
 {
     dekho babu "x is negative."
@@ -18,9 +27,8 @@ chalo babu i = 0 se lekar 5 uchal ke 1
     dekho babu i
 }
 
-chalo babu j = 10 se lekar 20 uchal ke 1
+chalo babu j = 0 se lekar 50 uchal ke 1
 {
-    dekho babu j
+    dekho babu j+1
 }
-
 Shona

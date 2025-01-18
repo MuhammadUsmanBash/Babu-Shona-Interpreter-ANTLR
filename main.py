@@ -1,3 +1,4 @@
+import sys
 from antlr4 import *
 from generated.BabuShonaLexer import BabuShonaLexer
 from generated.BabuShonaParser import BabuShonaParser
@@ -139,16 +140,30 @@ class BabuShonaInterpreter(BabuShonaVisitor):
     def visitParenthesesExpr(self, ctx):
         return self.visit(ctx.expr())
 
+
+def execute_babu_script(file_path):
+    try:
+        with open(file_path, "r") as file:
+            script = file.read()
+
+        input_stream = InputStream(script)
+        lexer = BabuShonaLexer(input_stream)
+        token_stream = CommonTokenStream(lexer)
+        parser = BabuShonaParser(token_stream)
+
+        tree = parser.script()
+
+        interpreter = BabuShonaInterpreter()
+        interpreter.visit(tree)
+    except Exception as e:
+        print(f"Error executing script: {e}")
+
+
 if __name__ == "__main__":
-    with open("script.txt", "r") as file:
-        script = file.read()
-
-    input_stream = InputStream(script)
-    lexer = BabuShonaLexer(input_stream)
-    token_stream = CommonTokenStream(lexer)
-    parser = BabuShonaParser(token_stream)
-
-    tree = parser.script()
-
-    interpreter = BabuShonaInterpreter()
-    interpreter.visit(tree)
+    # Ensure the script path is provided as a command-line argument
+    if len(sys.argv) > 1:
+        file_path = sys.argv[1]
+        execute_babu_script(file_path)
+    else:
+        print("Error: No file path provided. Please provide a path to a .babu script.")
+        sys.exit(1)
